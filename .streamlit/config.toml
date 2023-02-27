@@ -1,0 +1,17 @@
+[browser]
+gatherUsageStats = false
+
+[logger]
+level = "error"
+
+[server]
+runOnSave = true
+maxUploadSize = 2
+
+[theme]
+base = "dark"
+backgroundColor = "#0f172a"
+font = "sans serif"
+primaryColor = "#FFFFFF"
+secondaryBackgroundColor = "#334155"
+textColor = "#FFFFFF"

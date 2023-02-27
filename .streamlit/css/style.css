@@ -1,0 +1,50 @@
+/* Custom Theme .css-1tr1d6n */
+/* Dark Theme .css-ffhzg2 */
+/* Light Theme .css-fg4pbf */
+
+footer {
+    display: none;
+}
+
+div[role="dialog"] div[data-testid="stMarkdownContainer"] hr {
+    margin: 1rem 0;
+}
+div[role="dialog"] div[data-testid="stMarkdownContainer"] ul p {
+    margin: 0;
+    padding: 0;
+}
+div[role="dialog"] div[data-testid="stMarkdownContainer"] > p:last-of-type {
+    display: none;
+}
+div[data-testid="stImage"] {
+    max-width: 100%;
+    width: 100%;
+}
+
+div[data-testid="stDecoration"] {
+    height: 0.25rem;
+    background-image: linear-gradient(90deg, 
+        #ef4444 0%, 
+        #f97316 17%, 
+        #eab308 34%, 
+        #22c55e 51%, 
+        #3b82f6 68%, 
+        #6366f1 85%, 
+        #8b5cf6 100%
+    );
+}
+
+svg#find-by-color {
+    width: 200px;
+}
+
+/* Light Theme */
+.css-fg4pbf svg#find-by-color .dynamic {
+    fill: #334155;
+}
+
+/* Dark & Custom Themes */
+.css-1tr1d6n button[kind="secondary"]:active,
+.css-ffhzg2 button[kind="secondary"]:active {
+    color: #000000;
+}
