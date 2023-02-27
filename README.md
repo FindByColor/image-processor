@@ -23,9 +23,9 @@ docker build -t fbc-process-image .
 Running Container after First Build
 
 ```bash
-docker run -dp 8501:8501 fbc-process-image
+docker run --gpus=all -dp 8501:8501 fbc-process-image
 ```
-
+p
 Local Install
 ---
 
