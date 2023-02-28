@@ -20,14 +20,25 @@ Build the Container
 docker build -t fbc-process-image .
 ```
 
-Running Container after First Build
+Running Container for CUDA Devices:
 
 ```bash
 docker run --gpus=all -dp 8501:8501 fbc-process-image
 ```
-p
-Local Install
+
+Running Container for CPU Devices ( No CUDA ):
+```
+docker run -dp 8501:8501 fbc-process-image
+```
+
+Local Usage
 ---
+
+> You can also just run this locally on your developer machine if it has Python installed.
+
+**Requirements:**
+
+- [X] [Python 3.9+](https://www.python.org/downloads/)
 
 ```bash
 python3 -m venv venv
@@ -45,13 +56,4 @@ Run as CLI Tool
 
 ```bash
 python cli.py /path/to/image.jpg --output=/path/to/folder
-```
-
-Windows WSL:
----
-
-> You will likely need to run this command before you can run the install process
-
-```bash
-sudo apt install python3.8-venv
 ```
