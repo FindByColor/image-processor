@@ -1,15 +1,16 @@
 import albumentations as albu
+import argparse
 import cv2
 import extcolors
 import json
 import numpy as np
+import os
 import pandas as pd
 import psutil
 import torch
 
 from collections import namedtuple
 from colormap import rgb2hex
-from json import JSONEncoder
 from PIL import Image, ImageFilter
 from torch.utils import model_zoo
 
@@ -46,6 +47,60 @@ def create_model(model_name):
 def crop_image(clipped_image):
     image = Image.fromarray(clipped_image)
     return image.crop(image.getbbox())
+
+def extract_color(config):
+    # Make sure file exists before processing
+    if not os.path.exists(config["filename"].resolve()):
+        return print("❌ Unable to locate file: {}".format(config["filename"].resolve()))
+    
+    # Make directory if it does not exist
+    if not os.path.exists(config["dest"].resolve()):
+        os.makedirs(config["dest"].resolve())
+
+    # STEP 1: Load Original Image
+    original_image = load_image(config["filename"].resolve())
+    image = Image.fromarray(original_image.astype(np.uint8))
+    image.save(os.path.join(config["dest"].resolve(), "original-image.png"))
+    image.close()
+
+    # STEP 2: Generate Mask Image & JSON
+    mask = get_mask(original_image)
+    image = Image.fromarray((mask * 255).astype(np.uint8))
+    image.save(os.path.join(config["dest"].resolve(), "mask.png"))
+    image.close()
+
+    with open(os.path.join(config["dest"].resolve(), "mask.json"), "w") as outfile:
+        outfile.write(get_mask_json(mask))
+
+    # STEP 3: Generate Detected Product Image
+    overlay = get_overlay(original_image, mask)
+    image = Image.fromarray(overlay.astype(np.uint8))
+    image.save(os.path.join(config["dest"].resolve(), "overlay.png"))
+    image.close()
+
+    # STEP 4: Remove Background from Image
+    processed_image = remove_image_background(original_image, mask)
+    image = Image.fromarray(processed_image.astype(np.uint8))
+    image.save(os.path.join(config["dest"].resolve(), "processed-image.png"))
+    image.close()
+
+    # STEP 5: Trim Image to Remove Transparent Pixels
+    cropped_image = crop_image(processed_image)
+    image = cropped_image.copy()
+    image.save(os.path.join(config["dest"].resolve(), "cropped-image.png"))
+    image.close()
+
+    # STEP 6: Process Colors from Clipped Image for JSON
+    colors = get_product_colors(cropped_image)
+    with open(os.path.join(config["dest"].resolve(), "colors.json"), "w") as outfile:
+        outfile.write(colors.to_json())
+
+    # STEP 7: Generate Color Chart
+    product_color_chart = generate_color_chart(colors, cropped_image)
+    product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
+    product_color_chart.close()
+
+    return print("✅ Generated Assets: {} => {}".format(os.path.relpath(config["filename"].resolve()), os.path.relpath(config["dest"].resolve())))
 
 def generate_color_chart(colors, cropped_image):
     return color_chart(colors, cropped_image)
@@ -145,6 +200,32 @@ def load_image(img_file):
 
     # Resize Image if Larger than
     return np.array(img)
+
+def max_image_size(min_value, max_value):
+    def check_valid(arg: str):
+        try:
+            val = int(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'must be a valid `int`')
+        if val < min_value or val > max_value:
+            raise argparse.ArgumentTypeError(f'must be within [{min_value}, {max_value}]')
+        if val%32:
+            raise argparse.ArgumentTypeError(f'must be divisible by 32')
+        return val
+
+    return check_valid
+
+def ranged_int(min_value, max_value):
+    def check_valid(arg: str):
+        try:
+            val = int(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'must be a valid `int`')
+        if val < min_value or val > max_value:
+            raise argparse.ArgumentTypeError(f'must be within [{min_value}, {max_value}]')
+        return val
+
+    return check_valid
 
 def remove_image_background(original_image, mask):
     mask_channels = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
