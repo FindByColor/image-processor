@@ -4,6 +4,8 @@
 
 import argparse
 import os
+import shutil
+import sys
 import warnings
 
 from datetime import datetime 
@@ -25,22 +27,35 @@ config = vars(args)
 
 # Run Function with Configs
 if __name__ == '__main__':
-    start_time = datetime.now() 
     input = os.path.abspath('./data/input')
     output = os.path.abspath('./data/output')
 
-    # Loop through data/input
+    # Cleanup old files
+    for filename in os.listdir(output):
+        file_path = os.path.join(output, filename)
+        try:
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+    start_time = datetime.now()
+
+    # Loop through input folder and look for images
     for subdir, dirs, files in os.walk(input):
         for file in files:
             if file.endswith(('.jpg', '.png')):
+                # We need to keep the same folder structure as input
                 source_image = os.path.join(subdir, file)
                 output_path = os.path.splitext(source_image)[0]
                 output_path = output_path.replace(input, output)
 
                 config["filename"] = Path(source_image)
                 config["dest"] = Path(output_path)
-                
+
                 extract_color(config)
 
+                sys.stdout.flush()
+
     time_elapsed = datetime.now() - start_time
-    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+    print('Total Time: {} (hh:mm:ss.ms)'.format(time_elapsed))

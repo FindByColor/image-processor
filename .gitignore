@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 # Data folders:
+data/.cache
 data/input/*
 data/output/*
 !data/**/.gitkeep

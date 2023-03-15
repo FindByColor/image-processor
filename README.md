@@ -39,18 +39,22 @@ docker run --name fbc --rm -p 8501:8501 proof-of-concept streamlit run app.py
 
 You can process a single image using the `cli.py` script.
 
+NOTE: Change `"$(pwd)"/data` to your local path to `data` folder if executing outside of this project directory.
+
 ```bash
-docker run --name fbc --rm proof-of-concept python3 cli.py --help
-docker run --name fbc --rm proof-of-concept python3 cli.py data/input/image.jpg --dest=data/output/
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py --help
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py /fbc/data/input/image.jpg --dest=/fbc/data/output/
 ```
 
 ### Run CLI for Batch Image Processing
 
-To batch process everything in the `data/input` folder, use the `batch.py` script.
+To batch process everything in the `data/input` folder, use the `batch.py` script. 
+
+NOTE: Change `"$(pwd)"/data` to your local path to `data` folder if executing outside of this project directory.
 
 ```bash
-docker run --name fbc --rm proof-of-concept python3 batch.py --help
-docker run --name fbc --rm proof-of-concept python3 batch.py
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py --help
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py
 ```
 
 ### Run Docker in CUDA Mode

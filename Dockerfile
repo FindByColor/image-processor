@@ -5,7 +5,7 @@ LABEL version="1.0"
 LABEL description="Proof of Concept"
 LABEL vendor="Find By Color"
 
-WORKDIR /app
+WORKDIR /fbc
 COPY requirements.txt ./requirements.txt
 
 RUN apt-get update && apt-get install -y build-essential curl software-properties-common git libgl1 && rm -rf /var/lib/apt/lists/*

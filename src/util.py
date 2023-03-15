@@ -11,6 +11,8 @@ import torch
 
 from collections import namedtuple
 from colormap import rgb2hex
+from datetime import datetime 
+from functools import cache
 from PIL import Image, ImageFilter
 from torch.utils import model_zoo
 
@@ -22,6 +24,10 @@ from src.numpy_encoder import NumpyArrayEncoder
 from src.color_chart import *
 from src.config import *
 
+# Set Cache to data directory so docker can keep weights file after first run
+os.environ['TORCH_HOME'] = './data/.cache'
+
+@cache
 def cached_model():
     model = create_model("Unet_2020-10-30")
     model.eval()
@@ -36,27 +42,34 @@ def create_model(model_name):
         )
     }
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     model = models[model_name].model
     state_dict = model_zoo.load_url(models[model_name].url, progress=True, map_location=device.type)["state_dict"]
     state_dict = rename_layers(state_dict, {"model.": ""})
     model.load_state_dict(state_dict)
-    return model
+
+    if device.type == "cuda":
+        with torch.cuda.device(device):
+            return model
+
+    if device.type == "cpu":
+        return model
 
 def crop_image(clipped_image):
     image = Image.fromarray(clipped_image)
     return image.crop(image.getbbox())
 
 def extract_color(config):
+    start_time = datetime.now()
+
     # Make sure file exists before processing
     if not os.path.exists(config["filename"].resolve()):
         return print("❌ Unable to locate file: {}".format(config["filename"].resolve()))
     
     # Make directory if it does not exist
-    if not os.path.exists(config["dest"].resolve()):
-        os.makedirs(config["dest"].resolve())
-
+    os.makedirs(config["dest"].resolve(), exist_ok=True)
+        
     # STEP 1: Load Original Image
     original_image = load_image(config["filename"].resolve())
     image = Image.fromarray(original_image.astype(np.uint8))
@@ -100,14 +113,16 @@ def extract_color(config):
     product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
     product_color_chart.close()
 
-    return print("✅ Generated Assets: {} => {}".format(os.path.relpath(config["filename"].resolve()), os.path.relpath(config["dest"].resolve())))
+    time_elapsed = datetime.now() - start_time
+
+    return print("✅ Generated Assets: {} => {} | Processing Time: {} (hh:mm:ss.ms)".format(os.path.relpath(config["filename"].resolve()), os.path.relpath(config["dest"].resolve()), time_elapsed))
 
 def generate_color_chart(colors, cropped_image):
     return color_chart(colors, cropped_image)
 
 def get_device_info():
     # Define if we are detected CUDA or if we should use CPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     if device.type == "cuda":
         return f"""
