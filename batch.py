@@ -21,41 +21,47 @@ parser = argparse.ArgumentParser(prog='fbc-process-batch', description="Batch Co
 parser.add_argument('-l', '--limit', type=ranged_int(1, 12), metavar='\b', default=COLOR_LIMIT, help="Limit of Extracted Colors [1-12]")
 parser.add_argument('-m', '--max-size', type=max_image_size(512, 1024), metavar='\b', default=MAX_IMAGE_SIZE, help="Max Image Size before Resize [512-1024]")
 parser.add_argument('-t', '--tolerance', type=ranged_int(0, 100), metavar='\b', default=COLOR_TOLERANCE, help="Threshold to Group Related Colors [0-100]")
+parser.add_argument('--images', metavar='\b', action=argparse.BooleanOptionalAction, help="Generate Images")
+parser.add_argument('--json', metavar='\b', action=argparse.BooleanOptionalAction, help="Generate JSON Data")
 
 args = parser.parse_args()
 config = vars(args)
 
 # Run Function with Configs
 if __name__ == '__main__':
-    input = os.path.abspath('./data/input')
-    output = os.path.abspath('./data/output')
+    if config["images"] is True or config["json"] is True:
+        input = os.path.abspath('./data/input')
+        output = os.path.abspath('./data/output')
 
-    # Cleanup old files
-    for filename in os.listdir(output):
-        file_path = os.path.join(output, filename)
-        try:
-            if os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
+        # Cleanup old files
+        for filename in os.listdir(output):
+            file_path = os.path.join(output, filename)
+            try:
+                if os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-    start_time = datetime.now()
+        start_time = datetime.now()
 
-    # Loop through input folder and look for images
-    for subdir, dirs, files in os.walk(input):
-        for file in files:
-            if file.endswith(('.jpg', '.png')):
-                # We need to keep the same folder structure as input
-                source_image = os.path.join(subdir, file)
-                output_path = os.path.splitext(source_image)[0]
-                output_path = output_path.replace(input, output)
+        # Loop through input folder and look for images
+        for subdir, dirs, files in os.walk(input):
+            for file in files:
+                if file.endswith(('.jpg', '.png')):
+                    # We need to keep the same folder structure as input
+                    source_image = os.path.join(subdir, file)
+                    output_path = os.path.splitext(source_image)[0]
+                    output_path = output_path.replace(input, output)
 
-                config["filename"] = Path(source_image)
-                config["dest"] = Path(output_path)
+                    config["filename"] = Path(source_image)
+                    config["dest"] = Path(output_path)
 
-                extract_color(config)
+                    extract_color(config)
 
-                sys.stdout.flush()
+                    sys.stdout.flush()
 
-    time_elapsed = datetime.now() - start_time
-    print('Total Time: {} (hh:mm:ss.ms)'.format(time_elapsed))
+        time_elapsed = datetime.now() - start_time
+        print('Total Time: {} (hh:mm:ss.ms)'.format(time_elapsed))
+    else:
+        parser.print_help()
+        sys.exit(1)

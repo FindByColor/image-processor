@@ -69,49 +69,60 @@ def extract_color(config):
     
     # Make directory if it does not exist
     os.makedirs(config["dest"].resolve(), exist_ok=True)
-        
+
     # STEP 1: Load Original Image
     original_image = load_image(config["filename"].resolve())
-    image = Image.fromarray(original_image.astype(np.uint8))
-    image.save(os.path.join(config["dest"].resolve(), "original-image.png"))
-    image.close()
+
+    if config["images"] is True:
+        image = Image.fromarray(original_image.astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "original-image.png"))
+        image.close()
 
     # STEP 2: Generate Mask Image & JSON
     mask = get_mask(original_image)
-    image = Image.fromarray((mask * 255).astype(np.uint8))
-    image.save(os.path.join(config["dest"].resolve(), "mask.png"))
-    image.close()
 
-    with open(os.path.join(config["dest"].resolve(), "mask.json"), "w") as outfile:
-        outfile.write(get_mask_json(mask))
+    if config["images"] is True:
+        image = Image.fromarray((mask * 255).astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "mask.png"))
+        image.close()
+
+    if config["json"] is True:
+        with open(os.path.join(config["dest"].resolve(), "mask.json"), "w") as outfile:
+            outfile.write(get_mask_json(mask))
 
     # STEP 3: Generate Detected Product Image
-    overlay = get_overlay(original_image, mask)
-    image = Image.fromarray(overlay.astype(np.uint8))
-    image.save(os.path.join(config["dest"].resolve(), "overlay.png"))
-    image.close()
+    if config["images"] is True:
+        overlay = get_overlay(original_image, mask)
+        image = Image.fromarray(overlay.astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "overlay.png"))
+        image.close()
 
     # STEP 4: Remove Background from Image
     processed_image = remove_image_background(original_image, mask)
-    image = Image.fromarray(processed_image.astype(np.uint8))
-    image.save(os.path.join(config["dest"].resolve(), "processed-image.png"))
-    image.close()
+    if config["images"] is True:
+        image = Image.fromarray(processed_image.astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "processed-image.png"))
+        image.close()
 
     # STEP 5: Trim Image to Remove Transparent Pixels
     cropped_image = crop_image(processed_image)
-    image = cropped_image.copy()
-    image.save(os.path.join(config["dest"].resolve(), "cropped-image.png"))
-    image.close()
+    if config["images"] is True:
+        image = cropped_image.copy()
+        image.save(os.path.join(config["dest"].resolve(), "cropped-image.png"))
+        image.close()
 
     # STEP 6: Process Colors from Clipped Image for JSON
     colors = get_product_colors(cropped_image)
-    with open(os.path.join(config["dest"].resolve(), "colors.json"), "w") as outfile:
-        outfile.write(colors.to_json())
+
+    if config["json"] is True:
+        with open(os.path.join(config["dest"].resolve(), "colors.json"), "w") as outfile:
+            outfile.write(colors.to_json())
 
     # STEP 7: Generate Color Chart
-    product_color_chart = generate_color_chart(colors, cropped_image)
-    product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
-    product_color_chart.close()
+    if config["images"] is True:
+        product_color_chart = generate_color_chart(colors, cropped_image)
+        product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
+        product_color_chart.close()
 
     time_elapsed = datetime.now() - start_time
 

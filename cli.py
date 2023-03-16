@@ -4,6 +4,7 @@
 
 import argparse
 import pathlib
+import sys
 import warnings
 
 from src.config import COLOR_LIMIT, COLOR_TOLERANCE, MAX_IMAGE_SIZE
@@ -19,10 +20,16 @@ parser.add_argument('-d', '--dest', type=pathlib.Path, metavar='\b', help="Desti
 parser.add_argument('-l', '--limit', type=ranged_int(1, 12), metavar='\b', default=COLOR_LIMIT, help="Limit of Extracted Colors [1-12]")
 parser.add_argument('-m', '--max-size', type=max_image_size(512, 1024), metavar='\b', default=MAX_IMAGE_SIZE, help="Max Image Size before Resize [512-1024]")
 parser.add_argument('-t', '--tolerance', type=ranged_int(0, 100), metavar='\b', default=COLOR_TOLERANCE, help="Threshold to Group Related Colors [0-100]")
+parser.add_argument('--images', metavar='\b', action=argparse.BooleanOptionalAction, help="Generate Images")
+parser.add_argument('--json', metavar='\b', action=argparse.BooleanOptionalAction, help="Generate JSON Data")
 
 args = parser.parse_args()
 config = vars(args)
 
 # Run Function with Configs
 if __name__ == '__main__':
-    extract_color(config)
+    if config["images"] is True or config["json"] is True:
+        extract_color(config)
+    else:
+        parser.print_help()
+        sys.exit(1)

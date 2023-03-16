@@ -43,7 +43,7 @@ NOTE: Change `"$(pwd)"/data` to your local path to `data` folder if executing ou
 
 ```bash
 docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py --help
-docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py /fbc/data/input/image.jpg --dest=/fbc/data/output/
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py /fbc/data/input/image.jpg --dest=/fbc/data/output/ --json --images
 ```
 
 ### Run CLI for Batch Image Processing
@@ -54,7 +54,7 @@ NOTE: Change `"$(pwd)"/data` to your local path to `data` folder if executing ou
 
 ```bash
 docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py --help
-docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py --json --images
 ```
 
 ### Run Docker in CUDA Mode
@@ -95,7 +95,7 @@ You can process a single image using the `cli.py` script.
 
 ```bash
 python3 cli.py --help
-python3 cli.py data/input/image.jpg --dest=data/output/
+python3 cli.py data/input/image.jpg --dest=data/output/ --json --images
 ```
 
 ### Run CLI for Batch Image Processing
@@ -104,13 +104,13 @@ To batch process everything in the `data/input` folder, use the `batch.py` scrip
 
 ```bash
 python3 batch.py --help
-python3 batch.py
+python3 batch.py --json --images
 ```
 
 Windows WSL:
 ---
 
-> You will likely need to run this command before you can run the install process ( replace `3.9` in `python3.8-venv` with your machines version of python )
+> You will likely need to run this command before you can run the install process ( replace `3.9` in `python3.9-venv` with your machines version of python )
 
 ```bash
 sudo apt install python3.9-venv
