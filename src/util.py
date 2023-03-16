@@ -1,15 +1,18 @@
 import albumentations as albu
+import argparse
 import cv2
 import extcolors
 import json
 import numpy as np
+import os
 import pandas as pd
 import psutil
 import torch
 
 from collections import namedtuple
 from colormap import rgb2hex
-from json import JSONEncoder
+from datetime import datetime 
+from functools import cache
 from PIL import Image, ImageFilter
 from torch.utils import model_zoo
 
@@ -21,6 +24,10 @@ from src.numpy_encoder import NumpyArrayEncoder
 from src.color_chart import *
 from src.config import *
 
+# Set Cache to data directory so docker can keep weights file after first run
+os.environ['TORCH_HOME'] = './data/.cache'
+
+@cache
 def cached_model():
     model = create_model("Unet_2020-10-30")
     model.eval()
@@ -35,24 +42,98 @@ def create_model(model_name):
         )
     }
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     model = models[model_name].model
     state_dict = model_zoo.load_url(models[model_name].url, progress=True, map_location=device.type)["state_dict"]
     state_dict = rename_layers(state_dict, {"model.": ""})
     model.load_state_dict(state_dict)
-    return model
+
+    if device.type == "cuda":
+        with torch.cuda.device(device):
+            return model
+
+    if device.type == "cpu":
+        return model
 
 def crop_image(clipped_image):
     image = Image.fromarray(clipped_image)
     return image.crop(image.getbbox())
+
+def extract_color(config):
+    start_time = datetime.now()
+
+    # Make sure file exists before processing
+    if not os.path.exists(config["filename"].resolve()):
+        return print("❌ Unable to locate file: {}".format(config["filename"].resolve()))
+    
+    # Make directory if it does not exist
+    os.makedirs(config["dest"].resolve(), exist_ok=True)
+
+    # STEP 1: Load Original Image
+    original_image = load_image(config["filename"].resolve())
+
+    if config["images"] is True:
+        image = Image.fromarray(original_image.astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "original-image.png"))
+        image.close()
+
+    # STEP 2: Generate Mask Image & JSON
+    mask = get_mask(original_image)
+
+    if config["images"] is True:
+        image = Image.fromarray((mask * 255).astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "mask.png"))
+        image.close()
+
+    if config["json"] is True:
+        with open(os.path.join(config["dest"].resolve(), "mask.json"), "w") as outfile:
+            outfile.write(get_mask_json(mask))
+
+    # STEP 3: Generate Detected Product Image
+    if config["images"] is True:
+        overlay = get_overlay(original_image, mask)
+        image = Image.fromarray(overlay.astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "overlay.png"))
+        image.close()
+
+    # STEP 4: Remove Background from Image
+    processed_image = remove_image_background(original_image, mask)
+    if config["images"] is True:
+        image = Image.fromarray(processed_image.astype(np.uint8))
+        image.save(os.path.join(config["dest"].resolve(), "processed-image.png"))
+        image.close()
+
+    # STEP 5: Trim Image to Remove Transparent Pixels
+    cropped_image = crop_image(processed_image)
+    if config["images"] is True:
+        image = cropped_image.copy()
+        image.save(os.path.join(config["dest"].resolve(), "cropped-image.png"))
+        image.close()
+
+    # STEP 6: Process Colors from Clipped Image for JSON
+    colors = get_product_colors(cropped_image)
+
+    if config["json"] is True:
+        with open(os.path.join(config["dest"].resolve(), "colors.json"), "w") as outfile:
+            outfile.write(colors.to_json())
+
+    # STEP 7: Generate Color Chart
+    if config["images"] is True:
+        product_color_chart = generate_color_chart(colors, cropped_image)
+        product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
+        product_color_chart.close()
+
+    time_elapsed = datetime.now() - start_time
+
+    return print("✅ Generated Assets: {} => {} | Processing Time: {} (hh:mm:ss.ms)".format(os.path.relpath(config["filename"].resolve()), os.path.relpath(config["dest"].resolve()), time_elapsed))
 
 def generate_color_chart(colors, cropped_image):
     return color_chart(colors, cropped_image)
 
 def get_device_info():
     # Define if we are detected CUDA or if we should use CPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     if device.type == "cuda":
         return f"""
@@ -145,6 +226,32 @@ def load_image(img_file):
 
     # Resize Image if Larger than
     return np.array(img)
+
+def max_image_size(min_value, max_value):
+    def check_valid(arg: str):
+        try:
+            val = int(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'must be a valid `int`')
+        if val < min_value or val > max_value:
+            raise argparse.ArgumentTypeError(f'must be within [{min_value}, {max_value}]')
+        if val%32:
+            raise argparse.ArgumentTypeError(f'must be divisible by 32')
+        return val
+
+    return check_valid
+
+def ranged_int(min_value, max_value):
+    def check_valid(arg: str):
+        try:
+            val = int(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'must be a valid `int`')
+        if val < min_value or val > max_value:
+            raise argparse.ArgumentTypeError(f'must be within [{min_value}, {max_value}]')
+        return val
+
+    return check_valid
 
 def remove_image_background(original_image, mask):
     mask_channels = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)

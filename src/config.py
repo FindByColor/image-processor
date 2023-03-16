@@ -10,8 +10,8 @@ COLOR_TOLERANCE = 15
 # higher = crops more image but cleaner edges
 MASK_SMOOTH_SIZE = 8
 
-# Utility Constants ( must be divisible by 32 )
-MAX_IMAGE_SIZE = 1024
+# Utility Constants ( must be divisible by 32, best quality is 1024, but best performance is 512  )
+MAX_IMAGE_SIZE = 512
 
 # Ignore Colors that fall below this percent within the image
 MIN_COLOR_PERCENT = 0.035
