@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# lifecycle:    postCreateCommand
+# description:  This command is the last of three that finalizes container setup when a dev container is created.
+#               It happens after updateContentCommand and once the dev container has been assigned to a user
+#               for the first time. Cloud services can use this command to take advantage of user specific
+#               secrets and permissions.
+# author:       Peter Schmalfeldt <me@peterschmalfeldt.com>
+
+# Create local Constants
+CWD=$PWD
+
+# Import Common Functions and Constants
+source $CWD/.devcontainer/scripts/common
+
+# Debug Container State
+output 'Container Started'
+
+# @TODO: Add any other scripts that need to run the very first time the virtual machine is created
