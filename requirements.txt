@@ -6,8 +6,10 @@ extcolors
 iglovikov_helper_functions
 matplotlib
 numpy
-opencv-python-headless==4.5.5.64
+opencv-python-headless
 pillow
 streamlit
 torch
 torchvision
+memory_profiler
+webcolors

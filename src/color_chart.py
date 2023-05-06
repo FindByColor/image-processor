@@ -1,21 +1,16 @@
 import io
-import math
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 
-from PIL import Image, ImageFilter
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from PIL import Image
 
-chart_font = { 
-    'color': '#999999', 
-    'fontfamily': 'monospace', 
-    'fontsize': 190, 
+chart_font = {
+    'color': '#999999',
+    'fontfamily': 'monospace',
+    'fontsize': 190,
     'fontweight': 'bold'
 }
 
 def fig2img(fig):
     """Convert a Matplotlib figure to a PIL Image and return it"""
-    import io
     buf = io.BytesIO()
     fig.savefig(buf)
     buf.seek(0)
@@ -23,6 +18,15 @@ def fig2img(fig):
     return img
 
 def color_chart(colors, cropped_image):
+    import gc
+    import math
+
+    import matplotlib.patches as patches
+    import matplotlib.pyplot as plt
+
+    from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+    from PIL import ImageFilter
+
     #chart background
     fig, ax = plt.subplots(figsize=(136,112),dpi=10)
     ax.spines[['top', 'right', 'bottom', 'left']].set_visible(False)
@@ -41,11 +45,11 @@ def color_chart(colors, cropped_image):
     text_c = [c + ' ' + str(round(p*100/sum(list_percent),1)) +'%' for c, p in zip(list_color, list_percent)]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(180,70), dpi = 10)
 
-    #donut plot
+    # Donut Plot
     wedges, text = ax1.pie(list_percent, counterclock=False, labels= text_c, labeldistance= 1.05, colors = list_color, startangle=180, textprops={ 'fontsize': 150, 'color': '#999999', 'fontfamily': 'monospace' })
     plt.setp(wedges, width=0.3)
 
-    #add image in the center of donut plot
+    # Add image in the center of donut plot
     img = cropped_image
     img.thumbnail((600, 600), Image.ANTIALIAS)
 
@@ -85,7 +89,7 @@ def color_chart(colors, cropped_image):
     ax2.axis('off')
     plt.imshow(Image.open(buf))
     plt.margins(0)
-    
+
     plt.tight_layout()
     chart = plt.gcf()
     buf.close()

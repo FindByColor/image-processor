@@ -58,45 +58,12 @@ if uploaded_file is not None:
 
         # STEP 7: Generate Color Chart
         product_color_chart = generate_color_chart(colors, cropped_image)
-        
+
         # Generate Tabbed Interface
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Original", "Processed", "Steps", "Data", "Colors"])
-
-        # Original Image Tab
-        with tab1:
-            st.image(original_image, caption="Original Product Image", use_column_width=True)
-
-        # Processed Image Tab
-        with tab2:
-            st.image(processed_image, caption="Processed Product Image", use_column_width=True)
-
-        # Steps Tab
-        with tab3:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.image(original_image, caption="Original Product Image", use_column_width=True)
-                st.image(mask * 255, caption="Detected Product Mask", use_column_width=True)
-
-            with col2:
-                st.image(overlay, caption="Detected Product Overlay", use_column_width=True)
-                st.image(processed_image, caption="Processed Product Image", use_column_width=True)
-
-        # Data Tab
-        with tab4:
-            st.subheader("Product Mask")
-            st.dataframe(mask, use_container_width=True)
-
-            # Download JSON Mapping of Pixel Data
-            st.download_button(
-                label="Download",
-                data=get_mask_json(mask),
-                file_name="mask.json",
-                mime="application/json",
-                key="download-mask-json"
-            )
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Colors", "Original", "Processed", "Steps", "Data"])
 
         # Colors Tab
-        with tab5:
+        with tab1:
             st.subheader("Color Usage")
             st.image(product_color_chart, use_column_width=True)
 
@@ -109,4 +76,37 @@ if uploaded_file is not None:
                 file_name="color.json",
                 mime="application/json",
                 key="download-color-json"
+            )
+
+        # Original Image Tab
+        with tab2:
+            st.image(original_image, caption="Original Product Image", use_column_width=True)
+
+        # Processed Image Tab
+        with tab3:
+            st.image(processed_image, caption="Processed Product Image", use_column_width=True)
+
+        # Steps Tab
+        with tab4:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.image(original_image, caption="Original Product Image", use_column_width=True)
+                st.image(mask * 255, caption="Detected Product Mask", use_column_width=True)
+
+            with col2:
+                st.image(overlay, caption="Detected Product Overlay", use_column_width=True)
+                st.image(processed_image, caption="Processed Product Image", use_column_width=True)
+
+        # Data Tab
+        with tab5:
+            st.subheader("Product Mask")
+            st.dataframe(mask, use_container_width=True)
+
+            # Download JSON Mapping of Pixel Data
+            st.download_button(
+                label="Download",
+                data=get_mask_json(mask),
+                file_name="mask.json",
+                mime="application/json",
+                key="download-mask-json"
             )

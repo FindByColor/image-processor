@@ -3,12 +3,16 @@
 """CLI for Find By Color Proof of Concept"""
 
 import argparse
+import gc
 import os
 import shutil
 import sys
+import tracemalloc
 import warnings
 
-from datetime import datetime 
+import src.profiler as profiler
+
+from datetime import datetime
 from pathlib import Path
 from src.config import COLOR_LIMIT, COLOR_TOLERANCE, MAX_IMAGE_SIZE
 from src.util import extract_color, ranged_int, max_image_size
@@ -21,28 +25,36 @@ parser = argparse.ArgumentParser(prog='fbc-process-batch', description="Batch Co
 parser.add_argument('-l', '--limit', type=ranged_int(1, 12), metavar='\b', default=COLOR_LIMIT, help="Limit of Extracted Colors [1-12]")
 parser.add_argument('-m', '--max-size', type=max_image_size(512, 1024), metavar='\b', default=MAX_IMAGE_SIZE, help="Max Image Size before Resize [512-1024]")
 parser.add_argument('-t', '--tolerance', type=ranged_int(0, 100), metavar='\b', default=COLOR_TOLERANCE, help="Threshold to Group Related Colors [0-100]")
+parser.add_argument('--debug', metavar='\b', action=argparse.BooleanOptionalAction, help="Print Output to Terminal")
+parser.add_argument('--clean', metavar='\b', action=argparse.BooleanOptionalAction, help="Clean Output Folder")
 parser.add_argument('--images', metavar='\b', action=argparse.BooleanOptionalAction, help="Generate Images")
 parser.add_argument('--json', metavar='\b', action=argparse.BooleanOptionalAction, help="Generate JSON Data")
+parser.add_argument('--trace', metavar='\b', action=argparse.BooleanOptionalAction, help="Trace Memory Allocations")
 
 args = parser.parse_args()
 config = vars(args)
 
 # Run Function with Configs
 if __name__ == '__main__':
+    if config["trace"] is True:
+        tracemalloc.start(10)
+
     if config["images"] is True or config["json"] is True:
         input = os.path.abspath('./data/input')
         output = os.path.abspath('./data/output')
 
         # Cleanup old files
-        for filename in os.listdir(output):
-            file_path = os.path.join(output, filename)
-            try:
-                if os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+        if config["clean"] is True:
+            for filename in os.listdir(output):
+                file_path = os.path.join(output, filename)
+                try:
+                    if os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-        start_time = datetime.now()
+        if config["debug"] is True:
+            start_time = datetime.now()
 
         # Loop through input folder and look for images
         for subdir, dirs, files in os.walk(input):
@@ -58,10 +70,24 @@ if __name__ == '__main__':
 
                     extract_color(config)
 
-                    sys.stdout.flush()
+                    if config["debug"] is True:
+                        sys.stdout.flush()
 
-        time_elapsed = datetime.now() - start_time
-        print('Total Time: {} (hh:mm:ss.ms)'.format(time_elapsed))
+                    if config["trace"] is True:
+    	                profiler.snapshot()
+
+                    # Run Garbage Collection
+                    gc.collect()
+
+        if config["debug"] is True:
+            time_elapsed = datetime.now() - start_time
+            print('Total Time: {} (hh:mm:ss.ms)'.format(time_elapsed))
+
     else:
         parser.print_help()
         sys.exit(1)
+
+    if config["trace"] is True:
+        profiler.display_stats()
+        profiler.compare()
+        profiler.print_trace()

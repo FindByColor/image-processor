@@ -11,21 +11,24 @@ import torch
 
 from collections import namedtuple
 from colormap import rgb2hex
-from datetime import datetime 
+from datetime import datetime
 from functools import cache
 from PIL import Image, ImageFilter
+from scipy.spatial import KDTree
 from torch.utils import model_zoo
+from webcolors import hex_to_rgb
 
 from iglovikov_helper_functions.dl.pytorch.utils import tensor_from_rgb_image, rename_layers
 from iglovikov_helper_functions.utils.image_utils import pad, unpad
 from segmentation_models_pytorch import Unet
 
 from src.numpy_encoder import NumpyArrayEncoder
-from src.color_chart import *
+from src.color_chart import color_chart
 from src.config import *
+from src.colors import BASIC_COLORS
 
 # Set Cache to data directory so docker can keep weights file after first run
-os.environ['TORCH_HOME'] = './data/.cache'
+os.environ['TORCH_HOME'] = './data/model'
 
 @cache
 def cached_model():
@@ -61,12 +64,13 @@ def crop_image(clipped_image):
     return image.crop(image.getbbox())
 
 def extract_color(config):
-    start_time = datetime.now()
+    if config["debug"] is True:
+        start_time = datetime.now()
 
     # Make sure file exists before processing
     if not os.path.exists(config["filename"].resolve()):
         return print("❌ Unable to locate file: {}".format(config["filename"].resolve()))
-    
+
     # Make directory if it does not exist
     os.makedirs(config["dest"].resolve(), exist_ok=True)
 
@@ -77,6 +81,7 @@ def extract_color(config):
         image = Image.fromarray(original_image.astype(np.uint8))
         image.save(os.path.join(config["dest"].resolve(), "original-image.png"))
         image.close()
+        del image
 
     # STEP 2: Generate Mask Image & JSON
     mask = get_mask(original_image)
@@ -85,6 +90,7 @@ def extract_color(config):
         image = Image.fromarray((mask * 255).astype(np.uint8))
         image.save(os.path.join(config["dest"].resolve(), "mask.png"))
         image.close()
+        del image
 
     if config["json"] is True:
         with open(os.path.join(config["dest"].resolve(), "mask.json"), "w") as outfile:
@@ -96,6 +102,7 @@ def extract_color(config):
         image = Image.fromarray(overlay.astype(np.uint8))
         image.save(os.path.join(config["dest"].resolve(), "overlay.png"))
         image.close()
+        del image
 
     # STEP 4: Remove Background from Image
     processed_image = remove_image_background(original_image, mask)
@@ -103,6 +110,7 @@ def extract_color(config):
         image = Image.fromarray(processed_image.astype(np.uint8))
         image.save(os.path.join(config["dest"].resolve(), "processed-image.png"))
         image.close()
+        del image
 
     # STEP 5: Trim Image to Remove Transparent Pixels
     cropped_image = crop_image(processed_image)
@@ -110,6 +118,7 @@ def extract_color(config):
         image = cropped_image.copy()
         image.save(os.path.join(config["dest"].resolve(), "cropped-image.png"))
         image.close()
+        del image
 
     # STEP 6: Process Colors from Clipped Image for JSON
     colors = get_product_colors(cropped_image)
@@ -119,14 +128,14 @@ def extract_color(config):
             outfile.write(colors.to_json())
 
     # STEP 7: Generate Color Chart
-    if config["images"] is True:
+    if config["images"] is True and config["color_chart"] is True:
         product_color_chart = generate_color_chart(colors, cropped_image)
         product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
         product_color_chart.close()
 
-    time_elapsed = datetime.now() - start_time
-
-    return print("✅ Generated Assets: {} => {} | Processing Time: {} (hh:mm:ss.ms)".format(os.path.relpath(config["filename"].resolve()), os.path.relpath(config["dest"].resolve()), time_elapsed))
+    if config["debug"] is True:
+        time_elapsed = datetime.now() - start_time
+        print("✅ Generated Assets: {} => {} | Processing Time: {} (hh:mm:ss.ms)".format(os.path.relpath(config["filename"].resolve()), os.path.relpath(config["dest"].resolve()), time_elapsed))
 
 def generate_color_chart(colors, cropped_image):
     return color_chart(colors, cropped_image)
@@ -163,6 +172,19 @@ def get_device_info():
 
 def get_color_json(colors):
     return json.dumps(colors)
+
+def get_color_name(color):
+    names = []
+    rgb_values = []
+
+    for color_hex, color_name in BASIC_COLORS.items():
+        names.append(color_name)
+        rgb_values.append(hex_to_rgb(color_hex))
+
+    kdt_db = KDTree(rgb_values)
+    distance, index = kdt_db.query(color)
+
+    return names[index]
 
 def get_mask_json(mask):
     return json.dumps(mask, cls=NumpyArrayEncoder)
@@ -203,17 +225,23 @@ def get_product_colors(clipped_image, tolerance = COLOR_TOLERANCE, limit = COLOR
     colors_pre_list = str(colors).replace('([(','').split(', (')[0:-1]
     df_rgb = [i.split('), ')[0] + ')' for i in colors_pre_list]
     df_occurrences = [int(i.split('), ')[1].replace(')','')) for i in colors_pre_list]
-    
+
     total = sum(df_occurrences)
 
     # Calculate Percentages
     df_percents = []
     for i in df_occurrences:
         df_percents += [i / total]
-    
+
+    # Get color names from kex
+    color_names = []
+    for i in df_rgb:
+        color_rgb = int(i.split(", ")[0].replace("(","")), int(i.split(", ")[1]), int(i.split(", ")[2].replace(")",""))
+        color_names += [get_color_name(color_rgb)]
+
     # Convert RGB to HEX code
     df_hex = [rgb2hex(int(i.split(", ")[0].replace("(","")), int(i.split(", ")[1]), int(i.split(", ")[2].replace(")",""))) for i in df_rgb]
-    df = pd.DataFrame(zip(df_hex, df_occurrences, df_percents), columns = ["hex", "occurrence", "percent"])
+    df = pd.DataFrame(zip(df_hex, color_names, df_occurrences, df_percents), columns = ["hex", "color", "occurrence", "percent"])
 
     return df[df.percent >= MIN_COLOR_PERCENT]
 
@@ -265,12 +293,12 @@ def remove_image_background(original_image, mask):
 
     # Applying thresholding technique
     _, alpha = cv2.threshold(temp_channels, 0, 255, cv2.THRESH_BINARY)
-    
+
     # Using cv2.split() to split channels of coloured image
     b, g, r = cv2.split(np.asarray(masked_image))
-    
+
     # Making list of Red, Green, Blue # Channels and alpha
     rgba = [b, g, r, alpha]
-    
+
     # Using cv2.merge() to merge rgba into a coloured/multi-channeled image
     return cv2.merge(rgba, 4)
