@@ -46,7 +46,7 @@ def color_chart(colors, cropped_image):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(180,70), dpi = 10)
 
     # Donut Plot
-    wedges, text = ax1.pie(list_percent, counterclock=False, labels= text_c, labeldistance= 1.05, colors = list_color, startangle=180, textprops={ 'fontsize': 150, 'color': '#999999', 'fontfamily': 'monospace' })
+    wedges, text = ax1.pie(list_percent, counterclock=False, labels= text_c, labeldistance= 1.05, colors = list_color, startangle=180, textprops={ 'fontsize': 175, 'color': '#999999', 'fontfamily': 'monospace' })
     plt.setp(wedges, width=0.3)
 
     # Add image in the center of donut plot
@@ -71,23 +71,8 @@ def color_chart(colors, cropped_image):
     ab = AnnotationBbox(imagebox, (0, 0.1), frameon=False)
     ax1.add_artist(ab)
 
-    # Color Palette
-    x_posi, y_posi, y_posi2 = 40, -156, -156
-    for c in list_color:
-        if list_color.index(c) < math.ceil(len(list_color) / 2):
-            y_posi += 180
-            rect = patches.Rectangle((x_posi, y_posi), 360, 160, facecolor = c)
-            ax2.add_patch(rect)
-            ax2.text(x = x_posi+400, y = y_posi+100, s = c, fontdict=chart_font)
-        else:
-            y_posi2 += 180
-            rect = patches.Rectangle((x_posi + 675, y_posi2), 360, 160, facecolor = c)
-            ax2.add_artist(rect)
-            ax2.text(x = x_posi+1075, y = y_posi2+100, s = c, fontdict=chart_font)
-
     fig.set_facecolor('None')
     ax2.axis('off')
-    plt.imshow(Image.open(buf))
     plt.margins(0)
 
     plt.tight_layout()

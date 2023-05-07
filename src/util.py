@@ -125,10 +125,10 @@ def extract_color(config):
 
     if config["json"] is True:
         with open(os.path.join(config["dest"].resolve(), "colors.json"), "w") as outfile:
-            outfile.write(colors.to_json())
+            outfile.write(get_color_json(colors))
 
     # STEP 7: Generate Color Chart
-    if config["images"] is True and config["color_chart"] is True:
+    if config["images"] is True and config["make_color_chart"] is True:
         product_color_chart = generate_color_chart(colors, cropped_image)
         product_color_chart.save(os.path.join(config["dest"].resolve(), "product-color-chart.png"))
         product_color_chart.close()
@@ -171,7 +171,18 @@ def get_device_info():
         """
 
 def get_color_json(colors):
-    return json.dumps(colors)
+    count = len(colors['hex'])
+    formatted = []
+
+    for i in range(count):
+        formatted.append({
+            'hex': colors['hex'][i],
+            'color': colors['color'][i],
+            'occurrence': colors['occurrence'][i],
+            'percent': colors['percent'][i],
+        })
+
+    return json.dumps(formatted, cls=NumpyArrayEncoder)
 
 def get_color_name(color):
     names = []
@@ -225,6 +236,8 @@ def get_product_colors(clipped_image, tolerance = COLOR_TOLERANCE, limit = COLOR
     colors_pre_list = str(colors).replace('([(','').split(', (')[0:-1]
     df_rgb = [i.split('), ')[0] + ')' for i in colors_pre_list]
     df_occurrences = [int(i.split('), ')[1].replace(')','')) for i in colors_pre_list]
+
+    # TODO: Look at `297693100.jpg` image to check why this is returning nothing
 
     total = sum(df_occurrences)
 

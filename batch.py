@@ -67,6 +67,7 @@ if __name__ == '__main__':
 
                     config["filename"] = Path(source_image)
                     config["dest"] = Path(output_path)
+                    config["make_color_chart"] = False
 
                     extract_color(config)
 

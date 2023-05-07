@@ -35,7 +35,7 @@ if __name__ == '__main__':
         tracemalloc.start(10)
 
     if config["images"] is True or config["json"] is True:
-        config["color_chart"] = True
+        config["make_color_chart"] = True
         extract_color(config)
     else:
         parser.print_help()
