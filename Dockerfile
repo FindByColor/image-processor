@@ -2,7 +2,7 @@ FROM python:3.9
 
 LABEL maintainer "Peter Schmalfeldt peter@findbycolor.com"
 LABEL version="1.0"
-LABEL description="Proof of Concept"
+LABEL description="Image Processor"
 LABEL vendor="Find By Color"
 
 # Set Working Directory

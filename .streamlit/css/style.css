@@ -21,15 +21,22 @@ div[data-testid="stImage"] {
     width: 100%;
 }
 
+div[data-testid="stImage"] img {
+    margin: 0 auto;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+    max-width: 100%;
+}
+
 div[data-testid="stDecoration"] {
     height: 0.25rem;
-    background-image: linear-gradient(90deg, 
-        #ef4444 0%, 
-        #f97316 17%, 
-        #eab308 34%, 
-        #22c55e 51%, 
-        #3b82f6 68%, 
-        #6366f1 85%, 
+    background-image: linear-gradient(90deg,
+        #ef4444 0%,
+        #f97316 17%,
+        #eab308 34%,
+        #22c55e 51%,
+        #3b82f6 68%,
+        #6366f1 85%,
         #8b5cf6 100%
     );
 }
