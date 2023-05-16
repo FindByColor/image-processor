@@ -15,7 +15,7 @@
 Run the following terminal command from the root of this project:
 
 ```bash
-docker build --no-cache -t proof-of-concept .
+docker build --no-cache -t image-processor .
 ```
 
 ### Run Interactive Web App
@@ -23,7 +23,7 @@ docker build --no-cache -t proof-of-concept .
 This will start an interactive web application that runs on your local computer at http://127.0.0.1:8501
 
 ```bash
-docker run --name fbc --rm -p 8501:8501 proof-of-concept streamlit run app.py
+docker run --name fbc --rm -p 8501:8501 image-processor streamlit run app.py
 ```
 
 ### Run CLI for Single Image Processing
@@ -31,8 +31,8 @@ docker run --name fbc --rm -p 8501:8501 proof-of-concept streamlit run app.py
 You can process a single image using the `cli.py` script.
 
 ```bash
-docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py --help
-docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 cli.py /fbc/data/input/image.jpg --dest=/fbc/data/output/ --json --images
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data image-processor python3 cli.py --help
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data image-processor python3 cli.py /fbc/data/input/image.jpg --dest=/fbc/data/output/ --json --images
 ```
 
 ### Run CLI for Batch Image Processing
@@ -40,8 +40,8 @@ docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 c
 To batch process everything in the `data/input` folder, use the `batch.py` script.
 
 ```bash
-docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py --help
-docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data proof-of-concept python3 batch.py --json --images
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data image-processor python3 batch.py --help
+docker run --name fbc --rm -v "$(pwd)"/data:/fbc/data image-processor python3 batch.py --json --images
 ```
 
 ### Run Docker in CUDA Mode

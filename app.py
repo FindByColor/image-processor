@@ -1,4 +1,4 @@
-"""Web Application for Find By Color Proof of Concept"""
+"""Web App & CLI Image Processor for Find By Color"""
 
 import os
 import streamlit as st
@@ -18,8 +18,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
     layout="centered",
     menu_items={
-        'Get Help': 'https://github.com/FindByColor/proof-of-concept#readme',
-        'Report a bug': "https://github.com/FindByColor/proof-of-concept/issues/new",
+        'Get Help': 'https://github.com/FindByColor/image-processor#readme',
+        'Report a bug': "https://github.com/FindByColor/image-processor/issues/new",
         'About': get_device_info()
     }
 )

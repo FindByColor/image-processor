@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""CLI for Find By Color Proof of Concept"""
+"""CLI Image Processor for Find By Color"""
 
 import argparse
 import pathlib

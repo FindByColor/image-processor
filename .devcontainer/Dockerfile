@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
 LABEL maintainer "Peter Schmalfeldt peter@findbycolor.com"
 LABEL version="1.0"
-LABEL description="Proof of Concept"
+LABEL description="Image Processor"
 LABEL vendor="Find By Color"
 
 WORKDIR /fbc

@@ -6,7 +6,7 @@
 
 > Dev Containers are an extension of Docker that support consistent IDE environments.
 
-[![Open in Remote Container](https://img.shields.io/static/v1?style=for-the-badge&label=Remote%20Container&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/FindByColor/proof-of-concept)
+[![Open in Remote Container](https://img.shields.io/static/v1?style=for-the-badge&label=Remote%20Container&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/FindByColor/image-processor)
 
 If you are using VS Code, you can spin up a Remote Dev Container.
 
