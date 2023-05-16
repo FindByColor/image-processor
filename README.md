@@ -1,9 +1,9 @@
 ![Find By Color Logo](https://findbycolor-github.s3.amazonaws.com/logo.png "Find By Color Logo")
 
-Proof of Concept
+Image Processor
 ===
 
-> Web App & CLI for Find By Color Proof of Concept
+> Web App & CLI Image Processor for Find By Color
 
 Developer Overview
 ---
